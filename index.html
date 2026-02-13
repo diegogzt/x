@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Para Ti 🌸</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pastel: {
+                            pink: '#fdf2f8',   /* pink-50 */
+                            pinkdark: '#fbcfe8', /* pink-200 */
+                            mint: '#ecfdf5',   /* emerald-50 */
+                            mintdark: '#a7f3d0', /* emerald-200 */
+                            text: '#4b5563',   /* gray-600 */
+                            accent: '#db2777'  /* pink-600 */
+                        }
+                    },
+                    fontFamily: {
+                        hand: ['Pacifico', 'cursive'],
+                        body: ['Quicksand', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Mobile Reset */
+        * { -webkit-tap-highlight-color: transparent; }
+        body, html {
+            height: 100dvh;
+            width: 100%;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(180deg, #fdf2f8 0%, #ecfdf5 100%); /* Pastel Pink to Mint */
+        }
+
+        /* Floating Icons Animation */
+        .bg-icon {
+            position: absolute;
+            z-index: 0;
+            opacity: 0.15;
+            animation: float 20s linear infinite;
+        }
+        @keyframes float {
+            0% { transform: translateY(110dvh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.4; }
+            90% { opacity: 0.4; }
+            100% { transform: translateY(-10dvh) rotate(360deg); opacity: 0; }
+        }
+
+        /* Layout */
+        .safe-container {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100dvh;
+            padding: 2rem 1.5rem 2.5rem;
+        }
+        
+        /* Elements */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 2rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            text-align: center;
+        }
+
+        .avatar-container {
+            width: 130px;
+            height: 130px;
+            margin: 0 auto;
+            border-radius: 50%;
+            padding: 4px;
+            background: white;
+            box-shadow: 0 8px 20px rgba(219, 39, 119, 0.15); /* Soft pink shadow */
+            position: relative;
+        }
+        .avatar-container img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .badge-icon {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            padding: 6px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            color: #db2777; /* Accent Pink */
+        }
+
+        /* Buttons */
+        .btn-main {
+            background: #a7f3d0; /* emerald-200 */
+            color: #047857; /* emerald-700 */
+            border-radius: 99px;
+            padding: 1.25rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            width: 100%;
+            box-shadow: 0 4px 15px rgba(167, 243, 208, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            transition: transform 0.2s, background 0.2s;
+            border: none;
+        }
+        .btn-main:active { transform: scale(0.97); background: #6ee7b7; }
+
+        #btn-no {
+            background: #fbcfe8; /* pink-200 */
+            color: #be185d; /* pink-700 */
+            border: none;
+            border-radius: 99px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            position: absolute;
+            white-space: nowrap;
+            transition: all 0.3s;
+            z-index: 50;
+            box-shadow: 0 4px 15px rgba(251, 207, 232, 0.6);
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(253, 242, 248, 0.95); /* pink-50 opacity */
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+        .modal.visible { opacity: 1; pointer-events: auto; }
+    </style>
+</head>
+<body class="font-body text-gray-600">
+
+    <!-- Dynamic Background -->
+    <div id="bg-container"></div>
+
+    <!-- Main App -->
+    <div class="safe-container" id="main-view">
+        
+        <!-- Top Section: Photo & Greeting -->
+        <div class="flex flex-col items-center gap-4 mt-2">
+            <div class="avatar-container">
+                <img src="foto.png" alt="Tu foto">
+                <div class="badge-icon -bottom-1 -right-1 text-emerald-400">
+                    <i data-lucide="flower" size="22"></i>
+                </div>
+                <div class="badge-icon -top-1 -left-1 text-pink-400">
+                    <i data-lucide="sparkles" size="22"></i>
+                </div>
+            </div>
+            
+            <div class="text-center mt-2">
+                <h1 class="font-hand text-4xl text-pink-500 mb-1">¡Hola Amor!</h1>
+                <p class="text-emerald-600/80 font-bold text-lg tracking-wide">Una preguntita...</p>
+            </div>
+        </div>
+
+        <!-- Middle Section: Question Card -->
+        <div class="glass-panel mx-2 my-4">
+            <p class="text-gray-500 font-semibold mb-2 text-sm uppercase tracking-wider">¿Me harías el honor?</p>
+            <h2 class="text-3xl font-bold text-gray-700 leading-tight mb-2">
+                ¿Quieres ser mi
+            </h2>
+            <h2 class="font-hand text-5xl text-transparent bg-clip-text bg-gradient-to-br from-pink-400 to-emerald-400 pb-2">
+                San Valentín?
+            </h2>
+        </div>
+
+        <!-- Bottom Section: Actions -->
+        <div class="relative w-full h-36 flex flex-col items-center justify-end gap-4 pb-4">
+            <!-- Yes Button (Static) -->
+            <button onclick="accept()" class="btn-main">
+                <span>¡Sí, quiero!</span>
+                <i data-lucide="heart" size="24" fill="#047857" class="text-emerald-700"></i>
+            </button>
+            
+            <!-- No Button (Starts static, becomes absolute) -->
+            <div class="relative w-full h-12 flex justify-center items-center">
+                <button id="btn-no" onclick="dodge()" ontouchstart="dodge()">
+                    No, gracias
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Feedback -->
+    <div id="success-modal" class="modal">
+        <div class="w-full max-w-xs text-center p-6 bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(219,39,119,0.3)]">
+            <div class="flex justify-center -space-x-4 mb-6">
+                <div class="bg-pink-100 p-4 rounded-full z-10">
+                    <i data-lucide="heart" size="40" class="text-pink-500" fill="#ec4899"></i>
+                </div>
+                <div class="bg-emerald-100 p-4 rounded-full -ml-2">
+                    <i data-lucide="home" size="40" class="text-emerald-500"></i>
+                </div>
+            </div>
+            
+            <h2 class="font-hand text-4xl text-pink-500 mb-3">¡Siiii! 💕</h2>
+            
+            <div class="bg-slate-50 rounded-xl p-5 mb-6">
+                <p class="text-gray-800 font-bold text-lg mb-1">¡Abre la puerta! 🚪</p>
+                <p class="text-gray-500 text-sm">Tu San Valentín te espera fuera</p>
+            </div>
+            
+            <button onclick="location.reload()" class="text-gray-400 font-bold text-sm flex items-center justify-center gap-2 mx-auto hover:text-pink-400 transition-colors">
+                <i data-lucide="rotate-ccw" size="16"></i>
+                Ver otra vez
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Start Lucide
+        lucide.createIcons();
+
+        // 1. Pastel Background Animation
+        const bgContainer = document.getElementById('bg-container');
+        const iconsList = ['heart', 'cloud', 'flower', 'star', 'music'];
+        
+        function spawnIcon() {
+            const el = document.createElement('div');
+            const iconName = iconsList[Math.floor(Math.random() * iconsList.length)];
+            // Soft pastel colors for icons
+            const colors = ['#fbcfe8', '#a7f3d0', '#ffd166', '#c4b5fd']; 
+            
+            el.className = 'bg-icon';
+            el.innerHTML = `<i data-lucide="${iconName}"></i>`;
+            el.style.left = Math.random() * 90 + 5 + '%';
+            el.style.color = colors[Math.floor(Math.random() * colors.length)];
+            
+            // Random size between 20px and 45px
+            const size = Math.floor(Math.random() * 25 + 20);
+            el.style.width = size + 'px';
+            el.style.height = size + 'px';
+            
+            bgContainer.appendChild(el);
+            
+            lucide.createIcons({
+                root: el,
+                attrs: { width: size, height: size }
+            });
+
+            setTimeout(() => el.remove(), 20000);
+        }
+        setInterval(spawnIcon, 1200); // Slower spawn for less clutter
+        // Initial batch
+        for(let i=0; i<8; i++) spawnIcon();
+
+
+        // 2. Dodge Logic
+        const btnNo = document.getElementById('btn-no');
+        
+        function dodge() {
+            // Screen boundaries
+            // We use fixed positioning to break out of any container
+            const padding = 20;
+            const w = window.innerWidth - btnNo.offsetWidth - padding;
+            const h = window.innerHeight - btnNo.offsetHeight - padding;
+            
+            const x = Math.max(padding, Math.random() * w);
+            const y = Math.max(padding, Math.random() * h);
+            
+            btnNo.style.position = 'fixed';
+            btnNo.style.left = x + 'px';
+            btnNo.style.top = y + 'px';
+            
+            // Random playful text
+            const texts = ["¡Casi!", "¡Nop!", "Fallaste", "¡Muy lenta!", "¡Intenta!", "Ups..."];
+            btnNo.innerText = texts[Math.floor(Math.random() * texts.length)];
+            
+            // Slight rotation for fun
+            btnNo.style.transform = `rotate(${Math.random() * 20 - 10}deg)`;
+        }
+
+        // 3. Accept Logic
+        function accept() {
+            // Confetti - Pastel Colors
+            const end = Date.now() + 3500;
+            const colors = ['#f472b6', '#34d399', '#fbbf24', '#a78bfa'];
+
+            (function frame() {
+                confetti({ 
+                    particleCount: 6, 
+                    angle: 60, 
+                    spread: 60, 
+                    origin: { x: 0, y: 0.7 },
+                    colors: colors 
+                });
+                confetti({ 
+                    particleCount: 6, 
+                    angle: 120, 
+                    spread: 60, 
+                    origin: { x: 1, y: 0.7 }, 
+                    colors: colors 
+                });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+
+            // Transition
+            const main = document.getElementById('main-view');
+            main.style.transition = 'all 0.6s ease';
+            main.style.opacity = '0';
+            main.style.transform = 'scale(0.95)';
+            
+            setTimeout(() => {
+                const modal = document.getElementById('success-modal');
+                modal.classList.add('visible');
+            }, 400);
+        }
+    </script>
+</body>
+</html>
